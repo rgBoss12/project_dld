@@ -1342,113 +1342,116 @@ int main(int argc, char *argv[]) {
 				char *encrypted_states1;
 				char *encrypted_states2;
 				do {
-					line = "r0 4";
-					if ( line && line[0] && line[0] != 'q' ) {
-            if(coordinates_done==1)
-						{
-							if(first_32_bits_done==0)
-							{
-								line = concat("w1 ",encrypted_states1);
-                printf("%s\n", line);
-								add_history(line);
-								pStatus = parseLine(handle, line, &error);
-								CHECK_STATUS(pStatus, pStatus, cleanup);
-								line = "r0 4";
+          int iter = 0;
+          while(true) {
+            if(iter==64) break;
+  					line = "r0 4";
+  					if ( line && line[0] && line[0] != 'q' ) {
+              if(coordinates_done==1)
+  						{
+  							if(first_32_bits_done==0)
+  							{
+  								line = concat("w1 ",encrypted_states1);
+                  printf("%s\n", line);
+  								add_history(line);
+  								pStatus = parseLine(handle, line, &error);
+  								CHECK_STATUS(pStatus, pStatus, cleanup);
+  								line = "r0 4";
+                  printf("%s\n",line);
+  								add_history(line);
+  								pStatus = parseLine(handle, line, &error);
+  								CHECK_STATUS(pStatus, pStatus, cleanup);
+  								char *decrypted_data=decrypt(f2hData);
+  								printf("%s\n", decrypted_data);
+                  if(strcmp(decrypted_data,"00100001001000010010000100100001")==0) /** check ack1 is as expected or not**/
+  									{first_32_bits_done=1;
+  									printf("%s\n", "32 bit done");
+  								}
+  							}
+  							else if(second_32_bits_done==0)
+  							{
+
+  									// char *encrypted_states=encrypt(encrypted_states2);	/** take second_half of 64 bits **/
+  									line = concat("w1 ",encrypted_states2);
+  									add_history(line);
+  									printf("%s\n",line );
+  									pStatus = parseLine(handle, line, &error);
+  									CHECK_STATUS(pStatus, pStatus, cleanup);
+  									line = "r0 4";
+  									add_history(line);
+  									printf("%s\n",line );
+  									pStatus = parseLine(handle, line, &error);
+  									CHECK_STATUS(pStatus, pStatus, cleanup);
+  									char *decrypted_data=decrypt(f2hData);
+  									printf("%s\n", decrypted_data);
+  									if(strcmp(decrypted_data,"00100001001000010010000100100001")==0) /** check ack1 is as expected or not**/
+  										{second_32_bits_done=1;
+  											printf("%s\n","second 32 bits done" );
+
+  										}
+  							}
+  							else if(second_32_bits_done==1){
+                  char *encrypted_ack2=encrypt("00000000000000000000000000000001");
+
+  								line=concat("w1 ",encrypted_ack2); /** encrypted ack2 by host2**/
+  								add_history(line);
+  								printf("%s\n",line );
+  								pStatus = parseLine(handle, line, &error);
+  								CHECK_STATUS(pStatus, pStatus, cleanup);
+  								// free((void*)line);
+  								coordinates_done=0;
+  								first_32_bits_done=0;
+  								second_32_bits_done=0;
+
+  							}
+
+  						}
+  						else if(coordinates_done==0)
+  						{
+  							line="r0 4";
+  							add_history(line);
                 printf("%s\n",line);
-								add_history(line);
-								pStatus = parseLine(handle, line, &error);
-								CHECK_STATUS(pStatus, pStatus, cleanup);
-								char *decrypted_data=decrypt(f2hData);
-								printf("%s\n", decrypted_data);
-                if(strcmp(decrypted_data,"00100001001000010010000100100001")==0) /** check ack1 is as expected or not**/
-									{first_32_bits_done=1;
-									printf("%s\n", "32 bit done");
-								}
-							}
-							else if(second_32_bits_done==0)
-							{
+                pStatus = parseLine(handle, line, &error);
+                char *decrypted_data=decrypt(f2hData);
+  							char *coordiantes= decrypted_data;
+  							char *encrypted_data=encrypt(decrypted_data);
+  							printf("%s\n", f2hData);
+  							printf("%s\n",decrypted_data);
 
-									// char *encrypted_states=encrypt(encrypted_states2);	/** take second_half of 64 bits **/
-									line = concat("w1 ",encrypted_states2);
-									add_history(line);
-									printf("%s\n",line );
-									pStatus = parseLine(handle, line, &error);
-									CHECK_STATUS(pStatus, pStatus, cleanup);
-									line = "r0 4";
-									add_history(line);
-									printf("%s\n",line );
-									pStatus = parseLine(handle, line, &error);
-									CHECK_STATUS(pStatus, pStatus, cleanup);
-									char *decrypted_data=decrypt(f2hData);
-									printf("%s\n", decrypted_data);
-									if(strcmp(decrypted_data,"00100001001000010010000100100001")==0) /** check ack1 is as expected or not**/
-										{second_32_bits_done=1;
-											printf("%s\n","second 32 bits done" );
-
-										}
-							}
-							else if(second_32_bits_done==1){
-                char *encrypted_ack2=encrypt("00000000000000000000000000000001");
-
-								line=concat("w1 ",encrypted_ack2); /** encrypted ack2 by host2**/
-								add_history(line);
-								printf("%s\n",line );
-								pStatus = parseLine(handle, line, &error);
-								CHECK_STATUS(pStatus, pStatus, cleanup);
-								// free((void*)line);
-								coordinates_done=0;
-								first_32_bits_done=0;
-								second_32_bits_done=0;
-
-							}
-
-						}
-						else if(coordinates_done==0)
-						{
-							line="r0 4";
-							add_history(line);
-              printf("%s\n",line);
-              pStatus = parseLine(handle, line, &error);
-              char *decrypted_data=decrypt(f2hData);
-							char *coordiantes= decrypted_data;
-							char *encrypted_data=encrypt(decrypted_data);
-							printf("%s\n", f2hData);
-							printf("%s\n",decrypted_data);
-
-							line=concat("w1 ", encrypted_data);
-							add_history(line);
-              printf("%s\n",line);
-              pStatus = parseLine(handle, line, &error);
-							CHECK_STATUS(pStatus, pStatus, cleanup);
-							line="r0 4";
-							add_history(line);
-              printf("%s\n",line);
-							pStatus = parseLine(handle, line, &error);
-							CHECK_STATUS(pStatus, pStatus, cleanup);
-							decrypted_data=decrypt(f2hData);
-							printf("%s\n", f2hData);
-							printf("%s\n", decrypted_data);
-              if(strcmp(decrypted_data,"00100001001000010010000100100001") ==0)  /** ack1 from fpga right or not**/
-							{
-                char *encrypted_ack2=encrypt("00000000000000000000000000000001");
-                line=concat("w1 ",encrypted_ack2);
-              	add_history(line);
+  							line=concat("w1 ", encrypted_data);
+  							add_history(line);
                 printf("%s\n",line);
-								pStatus = parseLine(handle, line, &error);
-								CHECK_STATUS(pStatus, pStatus, cleanup);
-								coordinates_done=1;
-                printf("coordinates done\n");
-								char *encrypted_states;
-                encrypted_states= get_answer(coordiantes);
-                printf("got decrypted states\n");
-								encrypted_states1=substring_1(encrypted_states,1,8);
-              	encrypted_states2=substring_1(encrypted_states,9,8);
-              }
-						}
+                pStatus = parseLine(handle, line, &error);
+  							CHECK_STATUS(pStatus, pStatus, cleanup);
+  							line="r0 4";
+  							add_history(line);
+                printf("%s\n",line);
+  							pStatus = parseLine(handle, line, &error);
+  							CHECK_STATUS(pStatus, pStatus, cleanup);
+  							decrypted_data=decrypt(f2hData);
+  							printf("%s\n", f2hData);
+  							printf("%s\n", decrypted_data);
+                if(strcmp(decrypted_data,"00100001001000010010000100100001") ==0)  /** ack1 from fpga right or not**/
+  							{
+                  char *encrypted_ack2=encrypt("00000000000000000000000000000001");
+                  line=concat("w1 ",encrypted_ack2);
+                	add_history(line);
+                  printf("%s\n",line);
+  								pStatus = parseLine(handle, line, &error);
+  								CHECK_STATUS(pStatus, pStatus, cleanup);
+  								coordinates_done=1;
+                  printf("coordinates done\n");
+  								char *encrypted_states;
+                  encrypted_states= get_answer(coordiantes);
+                  printf("got decrypted states\n");
+  								encrypted_states1=substring_1(encrypted_states,1,8);
+                	encrypted_states2=substring_1(encrypted_states,9,8);
+                }
+  						}
 
-					}
-					}
-				 while (true);
+  					}
+          }
+				}while (true);
 			} else {
 				fprintf(stderr, "The FPGALink device at %s is not ready to talk - did you forget --xsvf?\n", vp);
 				FAIL(FLP_ARGS, cleanup);
