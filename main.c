@@ -45,6 +45,13 @@ struct data{
     char* value[8];
 };
 
+struct Map{
+  char * crdnts[32];
+  int chnl_no;
+};
+
+struct Map map[64];
+
 char* concat(const char *s1, const char *s2)
 {
     char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the null-terminator
@@ -1343,29 +1350,34 @@ int main(int argc, char *argv[]) {
 				char *encrypted_states2;
 				do {
           int iter = 0;
+          int start = 0;
           while(true) {
             if(iter==64) break;
-  					line = "r0 4";
+  					if(!start){
+              line = concat("r",concat(itoa(2*iter)," 4"));
+              start = 1;
+              continue;
+            }
   					if ( line && line[0] && line[0] != 'q' ) {
               if(coordinates_done==1)
   						{
   							if(first_32_bits_done==0)
   							{
-  								line = concat("w1 ",encrypted_states1);
-                  printf("%s\n", line);
+  								line = concat(concat("w",concat(itoa((2*iter)+1)," ")),encrypted_states1);
+                  // printf("%s\n", line);
   								add_history(line);
   								pStatus = parseLine(handle, line, &error);
   								CHECK_STATUS(pStatus, pStatus, cleanup);
-  								line = "r0 4";
-                  printf("%s\n",line);
+  								line = concat("r",concat(itoa(2*iter)," 4"));
+                  // printf("%s\n",line);
   								add_history(line);
   								pStatus = parseLine(handle, line, &error);
   								CHECK_STATUS(pStatus, pStatus, cleanup);
   								char *decrypted_data=decrypt(f2hData);
-  								printf("%s\n", decrypted_data);
+  								// printf("%s\n", decrypted_data);
                   if(strcmp(decrypted_data,"00100001001000010010000100100001")==0) /** check ack1 is as expected or not**/
   									{first_32_bits_done=1;
-  									printf("%s\n", "32 bit done");
+  									// printf("%s\n", "32 bit done");
   								}
   							}
   							else if(second_32_bits_done==0)
@@ -1408,42 +1420,44 @@ int main(int argc, char *argv[]) {
   						}
   						else if(coordinates_done==0)
   						{
-  							line="r0 4";
+  							line = concat("r",concat(itoa(2*iter)," 4"));
   							add_history(line);
-                printf("%s\n",line);
+                // printf("%s\n",line);
                 pStatus = parseLine(handle, line, &error);
                 char *decrypted_data=decrypt(f2hData);
   							char *coordiantes= decrypted_data;
   							char *encrypted_data=encrypt(decrypted_data);
-  							printf("%s\n", f2hData);
-  							printf("%s\n",decrypted_data);
+  							// printf("%s\n", f2hData);
+  							// printf("%s\n",decrypted_data);
 
-  							line=concat("w1 ", encrypted_data);
+  							line=concat(concat("w",concat(itoa((2*iter)+1)," ")), encrypted_data);
   							add_history(line);
-                printf("%s\n",line);
+                // printf("%s\n",line);
                 pStatus = parseLine(handle, line, &error);
   							CHECK_STATUS(pStatus, pStatus, cleanup);
-  							line="r0 4";
+  							line = concat("r",concat(itoa(2*iter)," 4"));
   							add_history(line);
-                printf("%s\n",line);
+                // printf("%s\n",line);
   							pStatus = parseLine(handle, line, &error);
   							CHECK_STATUS(pStatus, pStatus, cleanup);
   							decrypted_data=decrypt(f2hData);
-  							printf("%s\n", f2hData);
-  							printf("%s\n", decrypted_data);
+  							// printf("%s\n", f2hData);
+  							// printf("%s\n", decrypted_data);
                 if(strcmp(decrypted_data,"00100001001000010010000100100001") ==0)  /** ack1 from fpga right or not**/
   							{
+                  map[iter].crdnts = coordiantes;
+                  map[iter].chnl_no = 2*iter;
                   char *encrypted_ack2=encrypt("00000000000000000000000000000001");
-                  line=concat("w1 ",encrypted_ack2);
+                  line=concat(concat("w",concat(itoa((2*iter)+1)," ")),encrypted_ack2);
                 	add_history(line);
-                  printf("%s\n",line);
+                  // printf("%s\n",line);
   								pStatus = parseLine(handle, line, &error);
   								CHECK_STATUS(pStatus, pStatus, cleanup);
   								coordinates_done=1;
-                  printf("coordinates done\n");
+                  // printf("coordinates done\n");
   								char *encrypted_states;
                   encrypted_states= get_answer(coordiantes);
-                  printf("got decrypted states\n");
+                  // printf("got decrypted states\n");
   								encrypted_states1=substring_1(encrypted_states,1,8);
                 	encrypted_states2=substring_1(encrypted_states,9,8);
                 }
